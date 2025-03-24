@@ -1,5 +1,5 @@
 node {
-  def myGradleContainer = docker.image('gradle:jdk8')
+  def myGradleContainer = docker.image('openjdk:8-jdk')
   myGradleContainer.pull()
 
   stage('SCM check y Preparacion') {
@@ -7,7 +7,7 @@ node {
   }
 
   stage('Debug env.HOME') {
-    echo "Valor de env.HOME desde Jenkins: ${env.HOME}"
+    echo ":D:D Valor de env.HOME desde Jenkins: ${env.HOME}"
     sh 'echo Valor de $HOME desde el agente'
     myGradleContainer.inside {
       sh 'echo Valor de $HOME dentro del contenedor'
@@ -15,15 +15,24 @@ node {
     }
   }
 
-  stage('Testeo') {
-    myGradleContainer.inside("-v ${env.HOME}/.gradle:/home/gradle/.gradle") {
-      sh 'cd complete && gradle test'
+  stage('Instalar y probar con Gradle') {
+    myGradleContainer.inside {
+      sh '''
+        apt-get update && apt-get install -y wget unzip
+        wget https://services.gradle.org/distributions/gradle-7.6.1-bin.zip
+        unzip -q gradle-7.6.1-bin.zip
+        export PATH=$PWD/gradle-7.6.1/bin:$PATH
+        cd complete && gradle test
+      '''
     }
   }
 
   stage('Ejecucion') {
-    myGradleContainer.inside("-v ${env.HOME}/.gradle:/home/gradle/.gradle") {
-      sh 'cd complete && gradle run'
+    myGradleContainer.inside {
+      sh '''
+        export PATH=$PWD/gradle-7.6.1/bin:$PATH
+        cd complete && gradle run
+      '''
     }
   }
 }
