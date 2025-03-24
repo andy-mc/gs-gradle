@@ -1,68 +1,48 @@
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'application'
-apply plugin: 'maven-publish'
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'application'
+    id 'maven-publish'
+    id 'com.jfrog.artifactory' version '4.24.18' // o una versión compatible
+}
 
 mainClassName = 'hello.HelloWorld'
 
-// tag::repositories[]
-repositories { 
-    mavenCentral() 
-}
-// end::repositories[]
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-// tag::jar[]
-jar {
-    baseName = 'gs-gradle'
-    version =  '0.1.0'
+repositories {
+    mavenCentral()
 }
-// end::jar[]
-
-// tag::dependencies[]
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 dependencies {
-    compile "joda-time:joda-time:2.2"
-    testCompile "junit:junit:4.12"
+    implementation "joda-time:joda-time:2.2"
+    testImplementation "junit:junit:4.12"
 }
-// end::dependencies[]
 
-// tag::wrapper[]
-// end::wrapper[]
+jar {
+    archiveBaseName.set('gs-gradle')
+    archiveVersion.set('0.1.0')
+}
 
-// publication
 publishing {
     publications {
         jar(MavenPublication) {
-            groupId 'cursojenkinsmac'
-            artifactId 'gs-gradle'
-            version '1.0'
+            groupId = 'cursojenkinsmac'
+            artifactId = 'gs-gradle'
+            version = '1.0'
             from components.java
         }
     }
 }
 
-// artifactory configuration
-buildscript {
-    repositories {
-        jcenter()
-
-    }
-    dependencies {
-        //Check for the latest version here: http://plugins.gradle.org/plugin/com.jfrog.artifactory
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4+"
-    }
-}
-
-allprojects {
-    apply plugin: "com.jfrog.artifactory"
-}
-
 artifactory {
+    contextUrl = "${artifactory_contextUrl}" // se debe definir como variable de entorno o en Jenkins
     publish {
         repository {
             repoKey = 'default-gradle-dev-local'
+            username = "${artifactory_user}"      // variables recomendadas para seguridad
+            password = "${artifactory_password}"
             maven = true
         }
         defaults {
@@ -74,8 +54,9 @@ artifactory {
     resolve {
         repository {
             repoKey = 'default-gradle-dev'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
             maven = true
-
         }
     }
 }
